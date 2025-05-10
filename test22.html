@@ -1,0 +1,60 @@
+<div id="sacReview">
+    <h2>Pending Event Requests</h2>
+    <div id="eventList"></div>
+  </div>
+  
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  
+    const supabaseUrl = 'https://YOUR-PROJECT.supabase.co';
+    const supabaseKey = 'YOUR-ANON-KEY';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+  
+    async function fetchPendingEvents() {
+      const { data, error } = await supabase
+        .from('event_requests')
+        .select('*')
+        .eq('status', 'pending');
+  
+      if (error) {
+        console.error('Fetch error:', error);
+        return;
+      }
+  
+      const eventList = document.getElementById('eventList');
+      eventList.innerHTML = '';
+  
+      data.forEach(event => {
+        const card = document.createElement('div');
+        card.innerHTML = `
+          <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+            <strong>${event.event_name}</strong><br>
+            ${event.event_description}<br>
+            <em>Type:</em> ${event.event_type}<br>
+            <em>Venue:</em> ${event.venue}<br><br>
+            <button onclick="updateStatus(${event.id}, 'approved')">Approve</button>
+            <button onclick="updateStatus(${event.id}, 'rejected')">Reject</button>
+          </div>
+        `;
+        eventList.appendChild(card);
+      });
+    }
+  
+    window.updateStatus = async (id, status) => {
+      const { error } = await supabase
+        .from('event_requests')
+        .update({ status: status })
+        .eq('id', id);
+  
+      if (error) {
+        alert('Update failed!');
+        console.error(error);
+      } else {
+        alert('Status updated to ' + status);
+        fetchPendingEvents();
+      }
+    };
+  
+    fetchPendingEvents();
+  </script>
+  
